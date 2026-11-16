@@ -55,6 +55,9 @@ El frontend en http://localhost:4200 usa `proxy.conf.json` para llegar a la API.
 | categorias, productos | Carta y precios |
 | galeria | Fotos de la tienda |
 | contactos | Mensajes del formulario y del chat |
+| agente | Persona y reglas del agente |
+| textos, navegacion, sugerencias_chat | Todo el texto de la interfaz |
+| carritos, carrito_items | Carrito por sesión |
 | opciones_cafe | Tamaños, bases, leches, extras y endulzantes para armar un café |
 | pedidos, pedido_items | Pedidos creados desde el chat |
 | reservas | Reservas de mesa creadas desde el chat |
@@ -70,13 +73,36 @@ El frontend en http://localhost:4200 usa `proxy.conf.json` para llegar a la API.
 | GET | /api/especialidades | Especialidades |
 | GET | /api/precios | Carta agrupada por categoría |
 | POST | /api/contactos | Formulario de contacto |
+| GET | /api/sitio | Textos, navegación, sugerencias y datos del agente |
+| GET | /api/menu | Carta paginada por categoría |
+| GET, DELETE | /api/carrito | Ver o vaciar el carrito |
+| POST, PATCH, DELETE | /api/carrito/items | Agregar, cambiar o quitar ítems |
+| POST | /api/carrito/checkout | Pago simulado y creación del pedido |
 | POST | /api/chat | Agente Lucho |
 
 ## Agente Lucho
 
-El backend envía a gemma3 el catálogo de herramientas y le pide responder en JSON con la herramienta a usar (`format` de Ollama con JSON Schema). El backend ejecuta la herramienta contra MySQL, le devuelve el resultado al modelo y repite hasta 3 pasos. El frontend muestra cada resultado como una tarjeta en el chat.
+La persona, las reglas y el contexto del negocio salen de MySQL (tablas `agente`, `cafeteria`, `categorias`, `servicios`, `especialidades`). Cada dato concreto se obtiene con herramientas definidas por módulo en `backend/src/chatbot/herramientas/`, cada una con su JSON Schema:
 
-Herramientas: `ver_menu`, `buscar_productos`, `ver_especialidades`, `ver_servicios`, `info_cafeteria`, `ver_opciones_cafe`, `armar_cafe`, `crear_pedido`, `ver_pedido`, `cancelar_pedido`, `reservar_mesa`, `ver_reserva` y `dejar_mensaje`.
+| Módulo | Herramientas |
+|---|---|
+| negocio | `info_cafeteria`, `ver_servicios`, `ver_especialidades` |
+| menu | `ver_menu` (paginado), `buscar_productos`, `ver_opciones_cafe` |
+| carrito | `ver_carrito`, `agregar_al_carrito`, `armar_cafe`, `quitar_del_carrito`, `vaciar_carrito`, `iniciar_checkout` |
+| pedidos | `confirmar_pedido`, `ver_pedido`, `cancelar_pedido` |
+| reservas | `reservar_mesa`, `ver_reserva` |
+| contacto | `dejar_mensaje` |
+
+Proveedor (`LLM_PROVIDER`):
+
+- `ollama` (por defecto): gemma3 no soporta tool calling en Ollama, así que el modelo elige la herramienta respondiendo en JSON con `format` (JSON Schema) y el backend la ejecuta.
+- `anthropic`: function calling nativo (`tools` con `input_schema`, bucle `tool_use` / `tool_result`) con `claude-haiku-5-5`. Requiere `ANTHROPIC_API_KEY` en `.env`.
+
+Cada resultado vuelve al frontend como `acciones` y se muestra como tarjeta según su tipo: menú paginado, productos, especialidades, servicios, información, opciones de café, carrito, checkout, pedido o reserva.
+
+## Carrito y checkout
+
+El carrito vive en MySQL por sesión (header `X-Sesion`). El checkout es simulado: tarjeta, QR o efectivo; las tarjetas que terminan en `0000` se rechazan para probar el error.
 
 ## Créditos
 
