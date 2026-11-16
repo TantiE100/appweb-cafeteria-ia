@@ -1,8 +1,8 @@
 import { obtenerCafeteria } from '../models/cafeteria.model.js';
 import { listarCategorias } from '../models/producto.model.js';
 import { HERRAMIENTAS, catalogoHerramientas } from './herramientas.js';
+import { llamarModelo } from './proveedores.js';
 
-const REQUEST_TIMEOUT_MS = 90000;
 const MAX_PASOS = 3;
 
 function fechaHoy() {
@@ -49,39 +49,15 @@ const ESQUEMA = {
   required: ['herramienta', 'argumentos', 'respuesta']
 };
 
-function errorConCodigo(mensaje, code) {
-  return Object.assign(new Error(mensaje), { code });
-}
-
-async function llamarOllama(messages, format) {
-  let response;
-  try {
-    response = await fetch(`${process.env.OLLAMA_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      body: JSON.stringify({
-        model: process.env.OLLAMA_MODEL || 'gemma3:1b',
-        stream: false,
-        format,
-        options: { temperature: 0.2, num_predict: 400 },
-        messages
-      })
-    });
-  } catch (err) {
-    throw errorConCodigo(`No se pudo conectar con Ollama: ${err.message}`, 'OLLAMA_NO_DISPONIBLE');
-  }
-  if (!response.ok) {
-    const detalle = await response.text();
-    throw errorConCodigo(`Ollama respondió ${response.status}: ${detalle.slice(0, 300)}`, 'OLLAMA_ERROR');
-  }
-  const data = await response.json();
-  return data.message?.content?.trim() ?? '';
+function extraerJson(contenido) {
+  const inicio = contenido.indexOf('{');
+  const fin = contenido.lastIndexOf('}');
+  return inicio >= 0 && fin > inicio ? contenido.slice(inicio, fin + 1) : contenido;
 }
 
 function leerDecision(contenido) {
   try {
-    const json = JSON.parse(contenido);
+    const json = JSON.parse(extraerJson(contenido));
     return {
       herramienta: json.herramienta,
       argumentos: json.argumentos && typeof json.argumentos === 'object' ? json.argumentos : {},
@@ -93,7 +69,7 @@ function leerDecision(contenido) {
 }
 
 async function redactarFinal(messages) {
-  const texto = await llamarOllama([
+  const texto = await llamarModelo([
     ...messages,
     { role: 'user', content: 'Con los resultados anteriores, responde al cliente en español, en 1 a 3 oraciones, texto plano.' }
   ]);
@@ -106,7 +82,7 @@ export async function responderChat(mensaje, historial) {
   const usadas = new Set();
 
   for (let paso = 0; paso < MAX_PASOS; paso++) {
-    const decision = leerDecision(await llamarOllama(messages, ESQUEMA));
+    const decision = leerDecision(await llamarModelo(messages, ESQUEMA));
     const herramienta = HERRAMIENTAS[decision.herramienta];
     const firma = `${decision.herramienta}:${JSON.stringify(decision.argumentos)}`;
 
@@ -125,7 +101,7 @@ export async function responderChat(mensaje, historial) {
     }
     console.log(`[agente] ${decision.herramienta}`, JSON.stringify(decision.argumentos), resultado.error ? `-> ${resultado.error}` : '-> ok');
 
-    if (resultado.tipo && resultado.datos) {
+    if (resultado.tipo && resultado.datos && !(Array.isArray(resultado.datos) && !resultado.datos.length)) {
       acciones.push({ herramienta: decision.herramienta, tipo: resultado.tipo, datos: resultado.datos });
     }
     messages.push({ role: 'assistant', content: JSON.stringify({ herramienta: decision.herramienta, argumentos: decision.argumentos, respuesta: '' }) });

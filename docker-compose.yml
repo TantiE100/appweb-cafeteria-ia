@@ -20,6 +20,26 @@ services:
       timeout: 5s
       retries: 30
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: santis-coffee-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ${HOME}/.ollama:/root/.ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: 30m
+
+  ollama-modelo:
+    image: ollama/ollama:latest
+    container_name: santis-coffee-ollama-modelo
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "gemma3:1b"]
+    depends_on:
+      - ollama
+    restart: "no"
+
   backend:
     build: ./backend
     container_name: santis-coffee-backend
@@ -30,14 +50,19 @@ services:
       DB_USER: cafeteria
       DB_PASSWORD: cafeteria
       DB_NAME: santis_coffee
-      OLLAMA_URL: http://host.docker.internal:11434
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
       OLLAMA_MODEL: gemma3:1b
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-haiku-5-5}
       CORS_ORIGIN: http://localhost:4200
     ports:
       - "3000:3000"
     depends_on:
       mysql:
         condition: service_healthy
+      ollama:
+        condition: service_started
 
   frontend:
     build: ./frontend
