@@ -5,8 +5,7 @@ import { CarritoService } from '../core/services/carrito.service';
 import { SitioService } from '../core/services/sitio.service';
 import { PanelService } from '../core/state/panel.service';
 import { BotonAgregar } from '../shared/boton-agregar';
-import { CarritoLista } from '../shared/carrito-lista';
-import { CheckoutForm } from '../shared/checkout-form';
+import { CarritoFlujo } from '../shared/carrito-flujo';
 import { Icono } from '../shared/icono';
 import { Imagen } from '../shared/imagen';
 import { PedidoTicket } from '../shared/pedido-ticket';
@@ -76,7 +75,7 @@ export class ChatMenu {
 
 @Component({
   selector: 'app-chat-accion',
-  imports: [BotonAgregar, Icono, Imagen, CarritoLista, CheckoutForm, PedidoTicket, ChatMenu],
+  imports: [BotonAgregar, Icono, Imagen, CarritoFlujo, PedidoTicket, ChatMenu],
   template: `
     @switch (accion().tipo) {
       @case ('menu') {
@@ -163,12 +162,10 @@ export class ChatMenu {
         </div>
       }
       @case ('carrito') {
-        <div class="tarjeta-chat">
-          <app-carrito-lista (checkout)="panel.abrir('carrito', 'checkout')" />
-        </div>
+        <app-carrito-flujo />
       }
       @case ('checkout') {
-        <app-checkout-form />
+        <app-carrito-flujo [iniciarPagando]="true" />
       }
       @case ('pedido') {
         <app-pedido-ticket [pedido]="accion().datos" />

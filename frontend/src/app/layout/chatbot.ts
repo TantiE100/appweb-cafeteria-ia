@@ -41,8 +41,8 @@ import { ChatAccion } from './chat-acciones';
             <app-icono nombre="message-circle" [tamano]="15" />
             {{ t('chat.tab_chat') }}
           </button>
-          <button type="button" role="tab" class="pestana" [class.pestana-activa]="panel.pestana() === 'carrito'" [attr.aria-selected]="panel.pestana() === 'carrito'" (click)="panel.elegir('carrito')">
-            <app-icono nombre="shopping-bag" [tamano]="15" />
+          <button type="button" role="tab" class="pestana" [class.latido]="carrito.resaltar()" [class.pestana-activa]="panel.pestana() === 'carrito'" [attr.aria-selected]="panel.pestana() === 'carrito'" (click)="panel.elegir('carrito')">
+            <app-icono nombre="shopping-cart" [tamano]="15" />
             {{ t('chat.tab_carrito') }}
             @if (carrito.carrito().cantidad > 0) {
               <span class="rounded-full bg-oro px-1.5 text-[10px] font-semibold leading-4 text-fondo">{{ carrito.carrito().cantidad }}</span>
@@ -119,9 +119,9 @@ import { ChatAccion } from './chat-acciones';
         <div class="flex-1 overflow-y-auto px-4 py-5">
           <h2 class="mb-3 text-sm font-semibold">{{ t(panel.vista() === 'lista' ? 'carrito.titulo' : 'checkout.titulo') }}</h2>
           @if (panel.vista() === 'lista') {
-            <app-carrito-lista (checkout)="panel.vista.set('checkout')" />
+            <div class="vista-panel"><app-carrito-lista (checkout)="panel.vista.set('checkout')" /></div>
           } @else {
-            <app-checkout-form [conVolver]="true" (volver)="panel.vista.set('lista')" />
+            <div class="vista-panel"><app-checkout-form [conVolver]="true" (volver)="panel.vista.set('lista')" /></div>
           }
         </div>
       }

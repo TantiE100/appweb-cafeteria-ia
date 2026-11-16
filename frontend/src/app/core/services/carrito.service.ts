@@ -9,11 +9,27 @@ const VACIO: Carrito = { id: 0, items: [], cantidad: 0, total: 0 };
 export class CarritoService {
   private readonly http = inject(HttpClient);
   readonly carrito = signal<Carrito>(VACIO);
+  readonly resaltar = signal(false);
+  private temporizador: ReturnType<typeof setTimeout> | undefined;
+  private listo = false;
 
-  private fijar = tap<Carrito>((c) => this.carrito.set(c));
+  private fijar = tap<Carrito>((c) => this.actualizar(c));
+
+  private actualizar(c: Carrito): void {
+    const antes = this.carrito().cantidad;
+    this.carrito.set(c);
+    const notificar = this.listo && c.cantidad > antes;
+    this.listo = true;
+    if (notificar) {
+      this.resaltar.set(false);
+      clearTimeout(this.temporizador);
+      queueMicrotask(() => this.resaltar.set(true));
+      this.temporizador = setTimeout(() => this.resaltar.set(false), 1600);
+    }
+  }
 
   cargar(): void {
-    this.http.get<Carrito>('/api/carrito').subscribe({ next: (c) => this.carrito.set(c), error: () => undefined });
+    this.http.get<Carrito>('/api/carrito').subscribe({ next: (c) => this.actualizar(c), error: () => undefined });
   }
 
   agregar(productoId: number, cantidad = 1): Observable<Carrito> {

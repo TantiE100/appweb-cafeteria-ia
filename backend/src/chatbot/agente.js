@@ -54,8 +54,7 @@ async function ejecutar(nombre, args, contexto, acciones) {
   registrar(nombre, args, resultado);
   const vacio = Array.isArray(resultado.datos) && !resultado.datos.length;
   if (resultado.tipo && resultado.datos && !vacio) {
-    const previa = acciones.findIndex((a) => a.tipo === resultado.tipo && ['carrito', 'checkout'].includes(a.tipo));
-    if (previa >= 0) acciones.splice(previa, 1);
+    acciones.length = 0;
     acciones.push({ herramienta: nombre, tipo: resultado.tipo, datos: resultado.datos });
   }
   return resultado;

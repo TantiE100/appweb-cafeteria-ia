@@ -87,7 +87,7 @@ La persona, las reglas y el contexto del negocio salen de MySQL (tablas `agente`
 | Módulo | Herramientas |
 |---|---|
 | negocio | `info_cafeteria`, `ver_servicios`, `ver_especialidades` |
-| menu | `ver_menu` (paginado), `buscar_productos`, `ver_opciones_cafe` |
+| menu | `ver_producto`, `ver_menu` (paginado), `buscar_productos`, `ver_opciones_cafe` |
 | carrito | `ver_carrito`, `agregar_al_carrito`, `armar_cafe`, `quitar_del_carrito`, `vaciar_carrito`, `iniciar_checkout` |
 | pedidos | `confirmar_pedido`, `ver_pedido`, `cancelar_pedido` |
 | reservas | `reservar_mesa`, `ver_reserva` |

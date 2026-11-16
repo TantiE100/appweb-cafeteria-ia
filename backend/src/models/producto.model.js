@@ -86,3 +86,8 @@ export async function encontrarProducto(nombre) {
   }
   return null;
 }
+
+export async function buscarPorId(id) {
+  const [rows] = await pool.query(`SELECT ${COLUMNAS} ${BASE} WHERE p.id = ?`, [id]);
+  return rows;
+}

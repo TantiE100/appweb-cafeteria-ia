@@ -1,8 +1,19 @@
-import { paginarMenu, buscarProductos } from '../../models/producto.model.js';
+import { paginarMenu, buscarProductos, encontrarProducto, buscarPorId } from '../../models/producto.model.js';
 import { listarOpciones } from '../../models/opcion.model.js';
 import { bs, texto, entero } from './util.js';
 
 export default [
+  {
+    nombre: 'ver_producto',
+    descripcion: 'Muestra un solo producto concreto (precio y descripción) cuando el cliente pregunta por uno en particular, por ejemplo "¿a cuánto el americano?".',
+    parametros: { type: 'object', properties: { producto: { type: 'string' } }, required: ['producto'] },
+    async ejecutar({ producto }) {
+      const encontrado = await encontrarProducto(producto);
+      if (!encontrado) return { error: `No encontré "${texto(producto)}" en la carta. Ofrece buscar algo parecido.` };
+      const [detalle] = await buscarPorId(encontrado.id);
+      return { tipo: 'productos', datos: [detalle], resumen: `${detalle.nombre} (${detalle.categoria}) ${bs(detalle.precio)}: ${detalle.descripcion}${encontrado.disponible ? '' : ' (agotado)'}` };
+    }
+  },
   {
     nombre: 'ver_menu',
     descripcion: 'Muestra la carta paginada (6 productos por página), opcionalmente filtrada por categoría. La tarjeta del chat permite pasar de página.',

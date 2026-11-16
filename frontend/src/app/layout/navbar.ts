@@ -38,8 +38,8 @@ import { Logo } from '../shared/logo';
           <button type="button" class="icono-btn hidden lg:flex" [attr.aria-label]="t('chat.abrir')" [title]="t('chat.abrir')" (click)="panel.abrir('chat')">
             <app-icono nombre="message-circle" [tamano]="20" />
           </button>
-          <button type="button" class="icono-btn relative" [attr.aria-label]="t('carrito.titulo')" [title]="t('carrito.titulo')" (click)="panel.abrir('carrito')">
-            <app-icono nombre="shopping-bag" [tamano]="20" />
+          <button type="button" class="icono-btn relative" [class.latido]="carrito.resaltar()" [attr.aria-label]="t('carrito.titulo')" [title]="t('carrito.titulo')" (click)="panel.abrir('carrito')">
+            <app-icono nombre="shopping-cart" [tamano]="20" />
             @if (carrito.carrito().cantidad > 0) {
               <span class="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-oro px-1 text-center text-[10px] font-semibold leading-4 text-fondo">{{ carrito.carrito().cantidad }}</span>
             }

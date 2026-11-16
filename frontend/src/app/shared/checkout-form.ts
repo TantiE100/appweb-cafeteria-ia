@@ -56,7 +56,7 @@ import { PedidoTicket } from './pedido-ticket';
         </fieldset>
 
         @if (form.controls.metodo_pago.value === 'tarjeta') {
-          <div class="space-y-3">
+          <div class="vista-panel space-y-3">
             <div>
               <label class="etiqueta-campo" for="co-numero">{{ t('checkout.numero') }}</label>
               <input id="co-numero" class="campo" inputmode="numeric" autocomplete="cc-number" formControlName="numero" [class.campo-error]="invalido('numero')" />

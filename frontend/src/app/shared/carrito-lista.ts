@@ -9,7 +9,7 @@ import { Icono } from './icono';
   template: `
     @if (carrito().items.length === 0) {
       <div class="flex flex-col items-center gap-3 py-8 text-center text-sm text-suave">
-        <app-icono nombre="shopping-bag" [tamano]="28" />
+        <app-icono nombre="shopping-cart" [tamano]="28" />
         <p>{{ t('carrito.vacio') }}</p>
       </div>
     } @else {
@@ -44,7 +44,7 @@ import { Icono } from './icono';
       </div>
       <div class="mt-4 flex gap-2">
         <button type="button" class="btn-borde px-4 py-2.5 text-xs" (click)="vaciar()">{{ t('carrito.vaciar') }}</button>
-        <button type="button" class="btn-oro flex-1 py-2.5 text-xs" (click)="checkout.emit()">
+        <button type="button" class="btn-oro flex-1 py-2.5 text-xs" [class.latido]="resaltar()" (click)="checkout.emit()">
           {{ t('carrito.checkout') }}
         </button>
       </div>
@@ -56,6 +56,7 @@ export class CarritoLista {
   protected readonly t = inject(SitioService).t;
   protected readonly precio = inject(SitioService).precio;
   protected readonly carrito = this.servicio.carrito;
+  protected readonly resaltar = this.servicio.resaltar;
   readonly checkout = output<void>();
 
   protected cambiar(id: number, cantidad: number): void {
