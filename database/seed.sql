@@ -15,32 +15,24 @@ INSERT INTO cafeteria (nombre, eslogan, titulo, titulo_destacado, ciudad, histor
  '/media/video/cafeteria.mp4');
 
 INSERT INTO servicios (nombre, descripcion, icono, orden) VALUES
-('Café de especialidad', 'Métodos espresso, V60, Chemex y prensa francesa con granos bolivianos de origen único.', '☕', 1),
-('Desayunos y brunch', 'Desayunos completos, salteñas, sándwiches y opciones veganas todos los días.', '🥐', 2),
-('Repostería artesanal', 'Tortas, cheesecakes y galletas horneadas cada mañana en nuestra cocina.', '🍰', 3),
-('Café para llevar', 'Pide en barra o por WhatsApp y recoge tu bebida sin hacer fila.', '🥤', 4),
-('Delivery', 'Llevamos tu pedido a domicilio dentro de Cochabamba con apps aliadas.', '🛵', 5),
-('Eventos y catering', 'Barra de café móvil para reuniones, cumpleaños y eventos empresariales.', '🎉', 6),
-('Coworking y Wi-Fi', 'Mesas amplias, enchufes y Wi-Fi rápido para estudiar o trabajar.', '💻', 7),
-('Talleres de barismo', 'Cursos de fin de semana para aprender extracción, latte art y cata.', '🎓', 8);
+('Café de especialidad', 'Métodos espresso, V60, Chemex y prensa francesa con granos bolivianos de origen único.', 'coffee', 1),
+('Desayunos y brunch', 'Desayunos completos, salteñas, sándwiches y opciones veganas todos los días.', 'croissant', 2),
+('Repostería artesanal', 'Tortas, cheesecakes y galletas horneadas cada mañana en nuestra cocina.', 'cake-slice', 3),
+('Café para llevar', 'Pide en barra o por WhatsApp y recoge tu bebida sin hacer fila.', 'shopping-bag', 4),
+('Delivery', 'Llevamos tu pedido a domicilio dentro de Cochabamba con apps aliadas.', 'bike', 5),
+('Eventos y catering', 'Barra de café móvil para reuniones, cumpleaños y eventos empresariales.', 'party-popper', 6),
+('Coworking y Wi-Fi', 'Mesas amplias, enchufes y Wi-Fi rápido para estudiar o trabajar.', 'laptop', 7),
+('Talleres de barismo', 'Cursos de fin de semana para aprender extracción, latte art y cata.', 'graduation-cap', 8);
 
-INSERT INTO especialidades (nombre, descripcion, imagen, precio) VALUES
-('Espresso Lucho', 'Doble espresso intenso de Caranavi, notas de cacao y panela.', '/media/img/especialidades/espresso.jpg', 14.00),
-('Cappuccino Santi', 'Espresso, leche texturizada y un toque de canela y miel de caña.', '/media/img/especialidades/cappuccino.jpg', 20.00),
-('Latte de vainilla', 'Latte suave con jarabe de vainilla hecho en casa y latte art.', '/media/img/especialidades/latte.jpg', 22.00),
-('Cold brew de los Yungas', 'Café infusionado en frío por 18 horas, servido con hielo.', '/media/img/especialidades/cold-brew.jpg', 24.00),
-('Mocha cochabambino', 'Espresso con chocolate boliviano, leche y crema batida.', '/media/img/especialidades/mocha.jpg', 24.00),
-('Cheesecake de maracuyá', 'Cheesecake horneado con coulis de maracuyá del trópico.', '/media/img/especialidades/cheesecake.jpg', 26.00);
-
-INSERT INTO categorias (nombre, orden) VALUES
-('Cafés calientes', 1),
-('Métodos de filtrado', 2),
-('Bebidas frías', 3),
-('Tés e infusiones', 4),
-('Sin café', 5),
-('Desayunos', 6),
-('Salados', 7),
-('Repostería', 8);
+INSERT INTO categorias (nombre, icono, orden) VALUES
+('Cafés calientes', 'coffee', 1),
+('Métodos de filtrado', 'filter', 2),
+('Bebidas frías', 'snowflake', 3),
+('Tés e infusiones', 'leaf', 4),
+('Sin café', 'cup-soda', 5),
+('Desayunos', 'egg-fried', 6),
+('Salados', 'sandwich', 7),
+('Repostería', 'cake-slice', 8);
 
 INSERT INTO productos (categoria_id, nombre, descripcion, precio, etiquetas, disponible) VALUES
 (1, 'Espresso', 'Shot simple de espresso de la casa, blend de Caranavi.', 10.00, 'fuerte,intenso,clasico', TRUE),
@@ -147,10 +139,10 @@ INSERT INTO galeria (titulo, imagen) VALUES
 ('La vitrina', '/media/img/galeria/vitrina.jpg'),
 ('Granos de origen', '/media/img/galeria/origen.jpg');
 
-INSERT INTO pedidos (codigo, cliente, modalidad, estado, total) VALUES
-('SC-1001', 'Ana', 'mesa', 'entregado', 44.00),
-('SC-1002', 'Carlos', 'llevar', 'listo', 22.00),
-('SC-1003', 'Lucía', 'delivery', 'preparando', 60.00);
+INSERT INTO pedidos (codigo, cliente, modalidad, estado, metodo_pago, pago_estado, total) VALUES
+('SC-1001', 'Ana', 'mesa', 'entregado', 'tarjeta', 'aprobado', 44.00),
+('SC-1002', 'Carlos', 'llevar', 'listo', 'qr', 'aprobado', 22.00),
+('SC-1003', 'Lucía', 'delivery', 'preparando', 'efectivo', 'pendiente', 60.00);
 
 INSERT INTO pedido_items (pedido_id, producto_id, producto, cantidad, precio_unitario, detalle) VALUES
 (1, 8, 'Cappuccino', 2, 18.00, NULL),
@@ -162,3 +154,135 @@ INSERT INTO pedido_items (pedido_id, producto_id, producto, cantidad, precio_uni
 INSERT INTO reservas (codigo, nombre, telefono, fecha, hora, personas) VALUES
 ('R-2001', 'Familia Rojas', '+591 70000001', '2026-11-20', '10:00:00', 4),
 ('R-2002', 'Grupo de estudio', NULL, '2026-11-21', '16:30:00', 6);
+
+INSERT INTO especialidades (producto_id, nombre, descripcion, imagen, precio) VALUES
+(2, 'Espresso Lucho', 'Doble espresso intenso de Caranavi, notas de cacao y panela.', '/media/img/especialidades/espresso.jpg', 14.00),
+(8, 'Cappuccino Santi', 'Espresso, leche texturizada y un toque de canela y miel de caña.', '/media/img/especialidades/cappuccino.jpg', 18.00),
+(10, 'Latte de vainilla', 'Latte suave con jarabe de vainilla hecho en casa y latte art.', '/media/img/especialidades/latte.jpg', 22.00),
+(22, 'Cold brew de los Yungas', 'Café infusionado en frío por 18 horas, servido con hielo.', '/media/img/especialidades/cold-brew.jpg', 22.00),
+(12, 'Mocha cochabambino', 'Espresso con chocolate boliviano, leche y crema batida.', '/media/img/especialidades/mocha.jpg', 22.00),
+(56, 'Cheesecake de maracuyá', 'Cheesecake horneado con coulis de maracuyá del trópico.', '/media/img/especialidades/cheesecake.jpg', 26.00);
+
+INSERT INTO navegacion (etiqueta, ruta, icono, orden) VALUES
+('Inicio', '/', 'house', 1),
+('Servicios', '/servicios', 'concierge-bell', 2),
+('Especialidades', '/especialidades', 'sparkles', 3),
+('Nosotros', '/nosotros', 'store', 4),
+('Precios', '/precios', 'receipt-text', 5),
+('Contactos', '/contactos', 'mail', 6);
+
+INSERT INTO sugerencias_chat (texto, icono, orden) VALUES
+('Ver el menú', 'book-open', 1),
+('Arma mi café', 'coffee', 2),
+('¿Qué me recomiendas?', 'sparkles', 3),
+('Ver mi carrito', 'shopping-bag', 4),
+('Reservar una mesa', 'calendar-plus', 5),
+('Horario y dirección', 'map-pin', 6);
+
+INSERT INTO textos (clave, valor) VALUES
+('hero.cta', 'Explorar menú'),
+('inicio.servicios.titulo', 'Lo que hacemos'),
+('inicio.servicios.cta', 'Ver todos los servicios'),
+('inicio.especialidades.titulo', 'Especialidades de la casa'),
+('inicio.especialidades.cta', 'Ver especialidades'),
+('inicio.nosotros.titulo', 'Nuestra historia'),
+('inicio.nosotros.cta', 'Conócenos'),
+('inicio.cierre.titulo', '¿Un café?'),
+('inicio.cierre.texto', 'Revisa la carta completa o escríbenos. También puedes pedirle a Lucho que arme tu café.'),
+('inicio.cierre.cta_precios', 'Ver precios'),
+('inicio.cierre.cta_contacto', 'Contactar'),
+('servicios.titulo', 'Servicios'),
+('servicios.subtitulo', 'Todo lo que puedes encontrar en Santi''s Coffee, en barra, en casa o en tu evento.'),
+('especialidades.titulo', 'Especialidades'),
+('especialidades.subtitulo', 'Recetas de la casa con café boliviano de origen.'),
+('nosotros.titulo', 'Nosotros'),
+('nosotros.subtitulo', 'De un carrito en la Plaza Colón a nuestro propio tostador.'),
+('nosotros.galeria', 'La tienda'),
+('nosotros.direccion', 'Dirección'),
+('nosotros.telefono', 'Teléfono'),
+('nosotros.email', 'Email'),
+('nosotros.horario', 'Horario'),
+('precios.titulo', 'Precios'),
+('precios.subtitulo', 'Nuestra carta completa. Agrega lo que quieras al carrito.'),
+('contactos.titulo', 'Contactos'),
+('contactos.subtitulo', 'Escríbenos para pedidos especiales, eventos o lo que necesites.'),
+('contactos.nombre', 'Nombre'),
+('contactos.email', 'Email'),
+('contactos.telefono', 'Teléfono (opcional)'),
+('contactos.mensaje', 'Mensaje'),
+('contactos.enviar', 'Enviar mensaje'),
+('contactos.enviando', 'Enviando…'),
+('contactos.exito', '¡Gracias! Recibimos tu mensaje y te responderemos pronto.'),
+('contactos.error', 'No pudimos enviar tu mensaje. Revisa los datos e intenta de nuevo.'),
+('contactos.ph.nombre', 'Tu nombre'),
+('contactos.ph.email', 'tu@correo.com'),
+('contactos.ph.telefono', '+591 ...'),
+('contactos.ph.mensaje', '¿En qué podemos ayudarte?'),
+('comun.agregar', 'Agregar'),
+('comun.agregado', 'Agregado'),
+('comun.cargando', 'Cargando…'),
+('comun.error', 'Algo salió mal.'),
+('comun.reintentar', 'Reintentar'),
+('comun.anterior', 'Anterior'),
+('comun.siguiente', 'Siguiente'),
+('comun.pagina', 'Página'),
+('comun.de', 'de'),
+('comun.moneda', 'Bs'),
+('footer.derechos', 'Todos los derechos reservados.'),
+('chat.abrir', 'Hablar con Lucho'),
+('chat.cerrar', 'Cerrar'),
+('chat.tab_chat', 'Chat'),
+('chat.tab_carrito', 'Carrito'),
+('chat.placeholder', 'Escribe tu mensaje…'),
+('chat.escribiendo', 'Lucho está escribiendo'),
+('chat.limpiar', 'Nueva conversación'),
+('chat.error', 'No pude responder. Intenta de nuevo.'),
+('chat.bienvenida', '¡Hola! Soy Lucho. Puedo mostrarte la carta, armar tu café, llenar tu carrito, cobrarte y reservarte una mesa.'),
+('carrito.titulo', 'Tu carrito'),
+('carrito.vacio', 'Tu carrito está vacío.'),
+('carrito.total', 'Total'),
+('carrito.vaciar', 'Vaciar'),
+('carrito.checkout', 'Ir a pagar'),
+('checkout.titulo', 'Pago'),
+('checkout.cliente', 'Nombre'),
+('checkout.telefono', 'Teléfono'),
+('checkout.modalidad', 'Modalidad'),
+('checkout.mesa', 'En mesa'),
+('checkout.llevar', 'Para llevar'),
+('checkout.delivery', 'Delivery'),
+('checkout.metodo', 'Método de pago'),
+('checkout.tarjeta', 'Tarjeta'),
+('checkout.qr', 'QR'),
+('checkout.efectivo', 'Efectivo'),
+('checkout.numero', 'Número de tarjeta'),
+('checkout.vencimiento', 'MM/AA'),
+('checkout.cvv', 'CVV'),
+('checkout.pagar', 'Pagar'),
+('checkout.procesando', 'Procesando pago…'),
+('checkout.aviso_simulado', 'Pago simulado para la demo: no se realiza ningún cobro.'),
+('pedido.titulo', 'Pedido'),
+('pedido.estado', 'Estado'),
+('pedido.total', 'Total'),
+('pedido.pago', 'Pago'),
+('reserva.titulo', 'Reserva confirmada'),
+('reserva.personas', 'Personas'),
+('reserva.fecha', 'Fecha'),
+('reserva.hora', 'Hora');
+
+INSERT INTO agente (nombre, rol, personalidad, reglas) VALUES
+('Lucho', 'Barista virtual',
+ 'Eres Lucho, el barista virtual de la cafetería. Hablas en español, con calidez y cercanía boliviana, sin exagerar. Respondes en 1 a 3 oraciones, en texto plano y sin markdown.',
+ 'Todo dato del negocio (carta, precios, servicios, horario, dirección, pedidos, reservas y carrito) sale únicamente de las herramientas; nunca lo inventes.\nSi el cliente quiere ver, buscar, agregar, quitar, pagar, consultar, cancelar o reservar algo, usa la herramienta correspondiente.\nPara comprar, primero agrega los productos al carrito y luego llama a iniciar_checkout para que el cliente pague en la tarjeta del chat; usa confirmar_pedido solo si el cliente pide pagar en efectivo o QR y ya dio su nombre y modalidad.\nSi a una herramienta le falta un dato obligatorio, pídeselo al cliente.\nEl chat muestra una tarjeta con el resultado de cada herramienta: NO enumeres productos, precios ni ítems en tu texto; resume en una frase y sugiere el siguiente paso.\nLas respuestas anteriores del asistente en el historial ya se basaron en herramientas; no te disculpes por ellas.\nLos precios van en bolivianos (Bs).\nSi la pregunta no tiene relación con la cafetería, redirige amablemente.');
+
+INSERT INTO textos (clave, valor) VALUES
+('nav.menu', 'Menú'),
+('chat.enviar', 'Enviar'),
+('menu.todas', 'Todas'),
+('carrito.quitar', 'Quitar'),
+('carrito.aumentar', 'Aumentar cantidad'),
+('carrito.disminuir', 'Disminuir cantidad'),
+('opciones.tamanos', 'Tamaños'),
+('opciones.bases', 'Bases'),
+('opciones.leches', 'Leches'),
+('opciones.extras', 'Extras'),
+('opciones.endulzantes', 'Endulzantes');

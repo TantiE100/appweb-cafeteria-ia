@@ -1,31 +1,32 @@
 import { Component, HostListener, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { catchError, of } from 'rxjs';
-import { CafeteriaService } from '../core/services/cafeteria.service';
+import { CarritoService } from '../core/services/carrito.service';
+import { SitioService } from '../core/services/sitio.service';
+import { PanelService } from '../core/state/panel.service';
+import { Icono } from '../shared/icono';
+import { Logo } from '../shared/logo';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, Icono, Logo],
   template: `
     <header
-      class="fixed inset-x-0 top-0 z-40 border-b transition-colors duration-300"
-      [class]="solido() || abierto() ? 'border-borde bg-fondo' : 'border-transparent bg-transparent'"
+      class="barra fixed left-0 top-0 z-40 border-b"
+      [class]="solido() || abierto() ? 'border-borde bg-fondo/95 backdrop-blur' : 'border-transparent bg-transparent'"
     >
-      <nav class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <a routerLink="/" class="flex items-center gap-3" (click)="abierto.set(false)">
-          <span class="h-3 w-3 rounded-full bg-oro"></span>
-          <span class="text-lg font-bold tracking-wide">{{ cafeteria()?.nombre }}</span>
+      <nav class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+        <a routerLink="/" class="rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-oro" (click)="abierto.set(false)">
+          <app-logo [nombre]="sitio.cafeteria()?.nombre ?? ''" [alto]="32" />
         </a>
 
-        <ul class="hidden items-center gap-8 md:flex">
-          @for (enlace of enlaces; track enlace.ruta) {
+        <ul class="hidden items-center gap-1 md:flex">
+          @for (enlace of sitio.navegacion(); track enlace.ruta) {
             <li>
               <a
                 [routerLink]="enlace.ruta"
-                routerLinkActive="text-oro"
+                routerLinkActive="text-oro bg-white/5"
                 [routerLinkActiveOptions]="{ exact: enlace.ruta === '/' }"
-                class="enlace-sub text-xs font-semibold uppercase tracking-[0.2em] text-texto transition-colors duration-200 hover:text-oro"
+                class="block rounded-full px-3.5 py-2 text-sm font-medium text-texto/80 transition duration-200 hover:bg-white/5 hover:text-oro"
               >
                 {{ enlace.etiqueta }}
               </a>
@@ -33,30 +34,34 @@ import { CafeteriaService } from '../core/services/cafeteria.service';
           }
         </ul>
 
-        <button
-          type="button"
-          class="flex h-10 w-10 cursor-pointer flex-col items-center justify-center gap-1.5 md:hidden"
-          aria-label="Abrir menú"
-          [attr.aria-expanded]="abierto()"
-          (click)="abierto.set(!abierto())"
-        >
-          <span class="h-0.5 w-6 bg-oro"></span>
-          <span class="h-0.5 w-6 bg-oro"></span>
-          <span class="h-0.5 w-6 bg-oro"></span>
-        </button>
+        <div class="flex items-center gap-1">
+          <button type="button" class="icono-btn hidden lg:flex" [attr.aria-label]="t('chat.abrir')" [title]="t('chat.abrir')" (click)="panel.abrir('chat')">
+            <app-icono nombre="message-circle" [tamano]="20" />
+          </button>
+          <button type="button" class="icono-btn relative" [attr.aria-label]="t('carrito.titulo')" [title]="t('carrito.titulo')" (click)="panel.abrir('carrito')">
+            <app-icono nombre="shopping-bag" [tamano]="20" />
+            @if (carrito.carrito().cantidad > 0) {
+              <span class="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-oro px-1 text-center text-[10px] font-semibold leading-4 text-fondo">{{ carrito.carrito().cantidad }}</span>
+            }
+          </button>
+          <button type="button" class="icono-btn md:hidden" [attr.aria-label]="t('nav.menu')" [attr.aria-expanded]="abierto()" (click)="abierto.set(!abierto())">
+            <app-icono [nombre]="abierto() ? 'x' : 'menu'" [tamano]="22" />
+          </button>
+        </div>
       </nav>
 
       @if (abierto()) {
-        <ul class="border-t border-white/5 bg-fondo px-6 py-4 md:hidden">
-          @for (enlace of enlaces; track enlace.ruta) {
+        <ul class="border-t border-borde px-6 py-3 md:hidden">
+          @for (enlace of sitio.navegacion(); track enlace.ruta) {
             <li>
               <a
                 [routerLink]="enlace.ruta"
                 routerLinkActive="text-oro"
                 [routerLinkActiveOptions]="{ exact: enlace.ruta === '/' }"
-                class="block py-3 text-xs font-semibold uppercase tracking-[0.2em]"
+                class="flex items-center gap-3 rounded-xl px-2 py-3 text-sm font-medium"
                 (click)="abierto.set(false)"
               >
+                <app-icono [nombre]="enlace.icono" [tamano]="18" />
                 {{ enlace.etiqueta }}
               </a>
             </li>
@@ -67,10 +72,10 @@ import { CafeteriaService } from '../core/services/cafeteria.service';
   `,
 })
 export class Navbar {
-  protected readonly cafeteria = toSignal(
-    inject(CafeteriaService).cafeteria$.pipe(catchError(() => of(null))),
-    { initialValue: null },
-  );
+  protected readonly sitio = inject(SitioService);
+  protected readonly t = this.sitio.t;
+  protected readonly carrito = inject(CarritoService);
+  protected readonly panel = inject(PanelService);
   protected readonly abierto = signal(false);
   protected readonly solido = signal(typeof window !== 'undefined' && window.scrollY > 40);
 
@@ -78,13 +83,4 @@ export class Navbar {
   protected alDesplazar(): void {
     this.solido.set(window.scrollY > 40);
   }
-
-  protected readonly enlaces = [
-    { ruta: '/', etiqueta: 'Inicio' },
-    { ruta: '/servicios', etiqueta: 'Servicios' },
-    { ruta: '/especialidades', etiqueta: 'Especialidades' },
-    { ruta: '/nosotros', etiqueta: 'Nosotros' },
-    { ruta: '/precios', etiqueta: 'Precios' },
-    { ruta: '/contactos', etiqueta: 'Contactos' },
-  ];
 }

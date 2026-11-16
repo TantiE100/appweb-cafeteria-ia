@@ -7,5 +7,6 @@ export interface Producto {
 
 export interface CategoriaPrecios {
   categoria: string;
+  icono: string;
   productos: Producto[];
 }

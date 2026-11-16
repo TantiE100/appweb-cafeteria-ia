@@ -4,4 +4,5 @@ export interface Especialidad {
   descripcion: string;
   imagen: string;
   precio: number;
+  producto_id: number;
 }

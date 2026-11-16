@@ -1,45 +1,104 @@
 import { obtenerCafeteria } from '../models/cafeteria.model.js';
+import { obtenerAgente } from '../models/sitio.model.js';
 import { listarCategorias } from '../models/producto.model.js';
-import { HERRAMIENTAS, catalogoHerramientas } from './herramientas.js';
-import { llamarModelo } from './proveedores.js';
+import { listarServicios } from '../models/servicio.model.js';
+import { listarEspecialidades } from '../models/especialidad.model.js';
+import { HERRAMIENTAS, definicionesAnthropic, catalogoTexto } from './herramientas/index.js';
+import { proveedor, llamarAnthropic, llamarOllama } from './proveedores.js';
 
-const MAX_PASOS = 3;
+const MAX_PASOS = 6;
 
-function fechaHoy() {
-  return new Intl.DateTimeFormat('es-BO', {
-    timeZone: 'America/La_Paz',
-    weekday: 'long',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).format(new Date());
-}
-
-function fechaIso() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/La_Paz' }).format(new Date());
+function hoy() {
+  const zona = { timeZone: 'America/La_Paz' };
+  const largo = new Intl.DateTimeFormat('es-BO', { ...zona, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date());
+  const iso = new Intl.DateTimeFormat('en-CA', zona).format(new Date());
+  return `${largo} (${iso})`;
 }
 
 async function promptSistema() {
-  const [cafeteria, categorias] = await Promise.all([obtenerCafeteria(), listarCategorias()]);
-  return `Eres Lucho, el barista virtual de ${cafeteria.nombre} en ${cafeteria.direccion}. Eslogan: "${cafeteria.eslogan}".
-Hoy es ${fechaHoy()} (${fechaIso()}). Horario: ${cafeteria.horario}.
-Categorías de la carta: ${categorias.join(', ')}.
+  const [agente, cafeteria, categorias, servicios, especialidades] = await Promise.all([
+    obtenerAgente(),
+    obtenerCafeteria(),
+    listarCategorias(),
+    listarServicios(),
+    listarEspecialidades()
+  ]);
+  return `${agente.personalidad}
+Tu nombre es ${agente.nombre} (${agente.rol}) de ${cafeteria.nombre}, ${cafeteria.ciudad}. Eslogan: "${cafeteria.eslogan}".
 
-Tienes estas herramientas, que leen y escriben en la base de datos real de la cafetería:
-${catalogoHerramientas()}
+Contexto del negocio:
+- Dirección: ${cafeteria.direccion}. Horario: ${cafeteria.horario}.
+- Categorías de la carta: ${categorias.join(', ')}.
+- Servicios: ${servicios.map((s) => s.nombre).join(', ')}.
+- Especialidades: ${especialidades.map((e) => e.nombre).join(', ')}.
+- Hoy es ${hoy()}.
 
 Reglas:
-- Si el cliente pide ver, buscar, pedir, armar, consultar, cancelar o reservar algo, USA la herramienta adecuada en vez de inventar.
-- Nunca inventes productos, precios, códigos ni estados: salen solo de las herramientas.
-- Si a una herramienta le falta un dato obligatorio, responde pidiendo ese dato.
-- Cuando ya tengas el resultado de la herramienta, responde con "herramienta": "responder".
-- Respuestas en español, cálidas, en 1 a 3 oraciones, en texto plano sin markdown. Los precios en Bs.
-- Si piden algo ajeno a la cafetería, redirige amablemente.
-
-Responde SIEMPRE con un JSON: {"herramienta": "<nombre o responder>", "argumentos": {...}, "respuesta": "<texto para el cliente si herramienta es responder>"}`;
+${agente.reglas}`;
 }
 
-const ESQUEMA = {
+function registrar(nombre, args, resultado) {
+  console.log(`[agente] ${nombre} ${JSON.stringify(args)} ${resultado.error ? `-> ${resultado.error}` : '-> ok'}`);
+}
+
+async function ejecutar(nombre, args, contexto, acciones) {
+  const herramienta = HERRAMIENTAS[nombre];
+  if (!herramienta) return { error: `La herramienta ${nombre} no existe.` };
+  let resultado;
+  try {
+    resultado = await herramienta.ejecutar(args ?? {}, contexto);
+  } catch (err) {
+    console.error(err);
+    resultado = { error: 'La herramienta falló. Discúlpate y sugiere intentarlo de nuevo.' };
+  }
+  registrar(nombre, args, resultado);
+  const vacio = Array.isArray(resultado.datos) && !resultado.datos.length;
+  if (resultado.tipo && resultado.datos && !vacio) {
+    const previa = acciones.findIndex((a) => a.tipo === resultado.tipo && ['carrito', 'checkout'].includes(a.tipo));
+    if (previa >= 0) acciones.splice(previa, 1);
+    acciones.push({ herramienta: nombre, tipo: resultado.tipo, datos: resultado.datos });
+  }
+  return resultado;
+}
+
+function textoResultado(resultado) {
+  return resultado.error ? `ERROR: ${resultado.error}` : resultado.resumen ?? 'OK';
+}
+
+function normalizarHistorial(historial, mensaje) {
+  const mensajes = [];
+  for (const m of [...historial, { role: 'user', content: mensaje }]) {
+    if (!m.content) continue;
+    const ultimo = mensajes.at(-1);
+    if (ultimo?.role === m.role) ultimo.content += `\n\n${m.content}`;
+    else mensajes.push({ role: m.role, content: m.content });
+  }
+  while (mensajes[0]?.role === 'assistant') mensajes.shift();
+  return mensajes;
+}
+
+async function conAnthropic(system, mensajes, contexto) {
+  const tools = definicionesAnthropic();
+  const acciones = [];
+  for (let paso = 0; paso < MAX_PASOS; paso++) {
+    const respuesta = await llamarAnthropic({ system, messages: mensajes, tools });
+    const usos = respuesta.content.filter((b) => b.type === 'tool_use');
+    if (respuesta.stop_reason !== 'tool_use' || !usos.length) {
+      const texto = respuesta.content.filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+      return { respuesta: texto, acciones };
+    }
+    mensajes.push({ role: 'assistant', content: respuesta.content });
+    const resultados = [];
+    for (const uso of usos) {
+      const resultado = await ejecutar(uso.name, uso.input, contexto, acciones);
+      resultados.push({ type: 'tool_result', tool_use_id: uso.id, content: textoResultado(resultado), is_error: Boolean(resultado.error) });
+    }
+    mensajes.push({ role: 'user', content: resultados });
+  }
+  return { respuesta: 'Listo. ¿Te ayudo con algo más?', acciones };
+}
+
+const ESQUEMA_OLLAMA = {
   type: 'object',
   properties: {
     herramienta: { type: 'string', enum: [...Object.keys(HERRAMIENTAS), 'responder'] },
@@ -49,67 +108,42 @@ const ESQUEMA = {
   required: ['herramienta', 'argumentos', 'respuesta']
 };
 
-function extraerJson(contenido) {
-  const inicio = contenido.indexOf('{');
-  const fin = contenido.lastIndexOf('}');
-  return inicio >= 0 && fin > inicio ? contenido.slice(inicio, fin + 1) : contenido;
-}
-
 function leerDecision(contenido) {
   try {
-    const json = JSON.parse(extraerJson(contenido));
-    return {
-      herramienta: json.herramienta,
-      argumentos: json.argumentos && typeof json.argumentos === 'object' ? json.argumentos : {},
-      respuesta: typeof json.respuesta === 'string' ? json.respuesta.trim() : ''
-    };
+    const inicio = contenido.indexOf('{');
+    const json = JSON.parse(contenido.slice(inicio, contenido.lastIndexOf('}') + 1));
+    return { herramienta: json.herramienta, argumentos: json.argumentos ?? {}, respuesta: String(json.respuesta ?? '').trim() };
   } catch {
     return { herramienta: 'responder', argumentos: {}, respuesta: contenido };
   }
 }
 
-async function redactarFinal(messages) {
-  const texto = await llamarModelo([
-    ...messages,
-    { role: 'user', content: 'Con los resultados anteriores, responde al cliente en español, en 1 a 3 oraciones, texto plano.' }
-  ]);
-  return texto || 'Listo, aquí tienes la información.';
-}
-
-export async function responderChat(mensaje, historial) {
-  const messages = [{ role: 'system', content: await promptSistema() }, ...historial, { role: 'user', content: mensaje }];
+async function conOllama(system, mensajes, contexto) {
+  const messages = [
+    { role: 'system', content: `${system}\n\nHerramientas por módulo:\n${catalogoTexto()}\n\nResponde SIEMPRE con JSON {"herramienta": "<nombre o responder>", "argumentos": {...}, "respuesta": "<texto si herramienta es responder>"}.` },
+    ...mensajes
+  ];
   const acciones = [];
   const usadas = new Set();
-
-  for (let paso = 0; paso < MAX_PASOS; paso++) {
-    const decision = leerDecision(await llamarModelo(messages, ESQUEMA));
-    const herramienta = HERRAMIENTAS[decision.herramienta];
+  for (let paso = 0; paso < 3; paso++) {
+    const decision = leerDecision(await llamarOllama(messages, ESQUEMA_OLLAMA));
     const firma = `${decision.herramienta}:${JSON.stringify(decision.argumentos)}`;
-
-    if (!herramienta || usadas.has(firma)) {
-      const respuesta = decision.respuesta || (acciones.length ? await redactarFinal(messages) : '');
-      return { respuesta: respuesta || 'Perdona, no te entendí. ¿Me lo dices de otra forma?', acciones };
+    if (!HERRAMIENTAS[decision.herramienta] || usadas.has(firma)) {
+      return { respuesta: decision.respuesta || 'Listo. ¿Te ayudo con algo más?', acciones };
     }
-
     usadas.add(firma);
-    let resultado;
-    try {
-      resultado = await herramienta.ejecutar(decision.argumentos);
-    } catch (err) {
-      console.error(err);
-      resultado = { error: 'La herramienta falló. Discúlpate y sugiere intentarlo de nuevo.' };
-    }
-    console.log(`[agente] ${decision.herramienta}`, JSON.stringify(decision.argumentos), resultado.error ? `-> ${resultado.error}` : '-> ok');
-
-    if (resultado.tipo && resultado.datos && !(Array.isArray(resultado.datos) && !resultado.datos.length)) {
-      acciones.push({ herramienta: decision.herramienta, tipo: resultado.tipo, datos: resultado.datos });
-    }
+    const resultado = await ejecutar(decision.herramienta, decision.argumentos, contexto, acciones);
     messages.push({ role: 'assistant', content: JSON.stringify({ herramienta: decision.herramienta, argumentos: decision.argumentos, respuesta: '' }) });
-    messages.push({
-      role: 'user',
-      content: `Resultado de ${decision.herramienta}: ${resultado.error ? `ERROR: ${resultado.error}` : resultado.resumen}\nAhora responde al cliente con "herramienta": "responder", salvo que necesites otra herramienta.`
-    });
+    messages.push({ role: 'user', content: `Resultado de ${decision.herramienta}: ${textoResultado(resultado)}\nAhora responde al cliente con "herramienta": "responder", salvo que necesites otra herramienta.` });
   }
+  const final = await llamarOllama([...messages, { role: 'user', content: 'Responde al cliente en 1 a 3 oraciones, texto plano.' }]);
+  return { respuesta: final || 'Listo. ¿Te ayudo con algo más?', acciones };
+}
 
-  return { respuesta: await redactarFinal(messages), acciones };
+export async function responderChat(mensaje, historial, sesion) {
+  const system = await promptSistema();
+  const mensajes = normalizarHistorial(historial, mensaje);
+  const contexto = { sesion };
+  const resultado = proveedor() === 'anthropic' ? await conAnthropic(system, mensajes, contexto) : await conOllama(system, mensajes, contexto);
+  return { respuesta: resultado.respuesta || 'Listo. ¿Te ayudo con algo más?', acciones: resultado.acciones };
 }

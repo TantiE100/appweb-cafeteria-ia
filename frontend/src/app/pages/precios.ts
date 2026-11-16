@@ -1,30 +1,40 @@
-import { DecimalPipe } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { PreciosService } from '../core/services/precios.service';
+import { SitioService } from '../core/services/sitio.service';
 import { cargar } from '../core/util/cargar';
+import { BotonAgregar } from '../shared/boton-agregar';
 import { EstadoCarga } from '../shared/estado-carga';
+import { Icono } from '../shared/icono';
 import { Reveal } from '../shared/reveal';
 
 @Component({
   selector: 'app-precios',
-  imports: [DecimalPipe, EstadoCarga, Reveal],
+  imports: [EstadoCarga, Reveal, Icono, BotonAgregar],
   template: `
     <div class="pagina">
-      <h1 class="titulo-seccion mb-12" appReveal>Precios</h1>
+      <header class="encabezado" appReveal>
+        <h1 class="titulo-seccion">{{ t('precios.titulo') }}</h1>
+        <p class="subtitulo">{{ t('precios.subtitulo') }}</p>
+      </header>
       <app-estado-carga [cargando]="precios.cargando()" [error]="precios.error()" />
-      <div class="grid gap-12 lg:grid-cols-2">
+      <div class="grid gap-6 lg:grid-cols-2">
         @for (grupo of precios.datos(); track grupo.categoria) {
-          <section [appReveal]="$index * 100">
-            <h2 class="mb-6 border-b border-oro/40 pb-3 text-2xl font-medium italic text-oro">{{ grupo.categoria }}</h2>
-            <ul class="space-y-6">
+          <section class="tarjeta p-7" [appReveal]="($index % 2) * 100">
+            <h2 class="mb-5 flex items-center gap-3 text-lg font-semibold">
+              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-oro/10 text-oro">
+                <app-icono [nombre]="grupo.icono" [tamano]="19" />
+              </span>
+              {{ grupo.categoria }}
+            </h2>
+            <ul class="divide-y divide-borde">
               @for (p of grupo.productos; track p.id) {
-                <li>
-                  <div class="flex items-baseline gap-3">
-                    <h3 class="font-bold">{{ p.nombre }}</h3>
-                    <span class="flex-1 border-b border-dotted border-borde"></span>
-                    <span class="whitespace-nowrap font-semibold text-oro">Bs {{ p.precio | number: '1.2-2' }}</span>
+                <li class="flex items-center gap-4 py-4">
+                  <div class="min-w-0 flex-1">
+                    <h3 class="font-medium">{{ p.nombre }}</h3>
+                    <p class="mt-0.5 text-sm text-suave">{{ p.descripcion }}</p>
                   </div>
-                  <p class="mt-1 text-sm text-suave">{{ p.descripcion }}</p>
+                  <span class="whitespace-nowrap font-semibold text-oro">{{ precio(p.precio) }}</span>
+                  <app-boton-agregar [productoId]="p.id" [compacto]="true" />
                 </li>
               }
             </ul>
@@ -35,5 +45,7 @@ import { Reveal } from '../shared/reveal';
   `,
 })
 export class Precios {
+  protected readonly t = inject(SitioService).t;
+  protected readonly precio = inject(SitioService).precio;
   protected readonly precios = cargar(inject(PreciosService).listar());
 }

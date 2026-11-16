@@ -5,7 +5,7 @@
   --color-fondo: #0f0d0b;
   --color-superficie: #161310;
   --color-superficie-alta: #1d1915;
-  --color-borde: #2a2520;
+  --color-borde: rgb(255 255 255 / 0.07);
   --color-oro: #c8a165;
   --color-oro-claro: #d6b27a;
   --color-texto: #eae6df;
@@ -30,9 +30,16 @@
   }
 }
 
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-oro);
+    outline-offset: 2px;
+  }
+}
+
 @layer components {
   .titulo-seccion {
-    @apply text-4xl font-bold leading-tight tracking-tight sm:text-5xl;
+    @apply text-3xl font-semibold leading-tight tracking-tight sm:text-4xl;
   }
   .titulo-seccion em,
   .titulo-hero em {
@@ -41,23 +48,129 @@
   .etiqueta {
     @apply text-xs font-semibold uppercase tracking-[0.25em] text-oro;
   }
+  .encabezado {
+    @apply mb-14 max-w-2xl;
+  }
+  .subtitulo {
+    @apply mt-4 text-base leading-relaxed text-suave;
+  }
   .btn-oro {
-    @apply inline-block cursor-pointer border border-oro bg-oro px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] text-fondo transition-colors duration-300 hover:bg-transparent hover:text-oro disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-oro px-6 py-3 text-sm font-semibold text-fondo transition duration-200 hover:bg-oro-claro active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-borde {
-    @apply inline-block cursor-pointer border border-oro px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] text-oro transition-colors duration-300 hover:bg-oro hover:text-fondo;
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-texto transition duration-200 hover:border-oro hover:text-oro active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
   }
   .campo {
-    @apply w-full border border-borde bg-superficie px-4 py-3 text-sm text-texto outline-none transition-colors duration-200 placeholder:text-suave/60 focus:border-oro;
+    @apply w-full rounded-xl border border-borde bg-fondo px-4 py-3 text-sm text-texto outline-none transition duration-200 placeholder:text-suave/50 focus:border-oro/70;
+  }
+  .campo-error {
+    @apply border-red-500/60;
+  }
+  .etiqueta-campo {
+    @apply mb-1.5 block text-xs font-medium text-suave;
   }
   .pagina {
-    @apply mx-auto max-w-6xl px-6 pb-24 pt-32;
+    @apply mx-auto max-w-6xl px-6 pb-24 pt-36;
   }
   .tarjeta {
-    @apply border border-borde bg-superficie hover:border-oro/60;
+    @apply overflow-hidden rounded-2xl border border-borde bg-superficie transition-colors duration-200 hover:border-white/15;
   }
   .enlace-sub {
-    @apply relative inline-block after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-oro after:transition-transform after:duration-300 hover:after:scale-x-100;
+    @apply relative inline-block text-sm font-medium text-oro after:absolute after:-bottom-1 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-oro after:transition-transform after:duration-200 hover:after:scale-x-100;
+  }
+  .icono-btn {
+    @apply flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-texto/80 transition duration-200 hover:bg-white/5 hover:text-oro active:scale-95;
+  }
+  .paso {
+    @apply flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-suave transition duration-150 hover:bg-white/5 hover:text-oro disabled:cursor-not-allowed disabled:opacity-30;
+  }
+  .chip {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-borde bg-superficie px-3 py-1.5 text-xs font-medium text-texto/90 transition duration-200 hover:border-oro/60 hover:text-oro;
+  }
+  .chip-activo {
+    @apply border-oro/60 bg-oro/10 text-oro;
+  }
+  .opcion {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-borde px-3 py-1.5 text-xs font-medium text-suave transition duration-200 hover:border-white/20 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-oro;
+  }
+  .opcion-activa {
+    @apply border-oro/60 bg-oro/10 text-oro;
+  }
+  .pestana {
+    @apply inline-flex cursor-pointer items-center gap-2 rounded-t-xl border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-suave transition duration-200 hover:text-texto;
+  }
+  .pestana-activa {
+    @apply border-oro text-texto;
+  }
+  .burbuja {
+    @apply max-w-[88%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed;
+  }
+  .burbuja-usuario {
+    @apply rounded-br-md bg-oro text-fondo;
+  }
+  .burbuja-asistente {
+    @apply rounded-bl-md border border-borde bg-superficie-alta;
+  }
+  .tarjeta-chat {
+    @apply rounded-2xl border border-borde bg-superficie p-3.5;
+  }
+  .punto {
+    @apply inline-block h-1.5 w-1.5 rounded-full bg-suave;
+    animation: punto 1.1s infinite ease-in-out;
+  }
+  .msg {
+    animation: entrada 250ms var(--ease-suave);
+  }
+  .flotante {
+    @apply fixed bottom-5 right-5 z-40 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full bg-oro text-fondo transition duration-200 hover:bg-oro-claro active:scale-95;
+  }
+  .flotante-oculto {
+    @apply pointer-events-none scale-75 opacity-0;
+  }
+}
+
+.contenido-principal {
+  transition: margin-right 300ms var(--ease-suave);
+}
+.barra {
+  right: 0;
+  transition:
+    right 300ms var(--ease-suave),
+    background-color 200ms,
+    border-color 200ms;
+}
+.panel-chat {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 50;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  background: var(--color-fondo);
+  border-left: 1px solid var(--color-borde);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition:
+    transform 300ms var(--ease-suave),
+    visibility 0s linear 300ms;
+}
+.panel-chat.panel-abierto {
+  transform: none;
+  visibility: visible;
+  transition:
+    transform 300ms var(--ease-suave),
+    visibility 0s;
+}
+@media (min-width: 1024px) {
+  .panel-chat {
+    width: 400px;
+    z-index: 30;
+  }
+  .contenido-principal.con-panel {
+    margin-right: 400px;
+  }
+  .contenido-principal.con-panel .barra {
+    right: 400px;
   }
 }
 
@@ -67,7 +180,7 @@
   transition:
     opacity 600ms var(--ease-suave),
     transform 600ms var(--ease-suave),
-    border-color 300ms var(--ease-suave);
+    border-color 200ms var(--ease-suave);
   transition-delay: var(--retraso, 0ms);
 }
 .reveal.visible {
