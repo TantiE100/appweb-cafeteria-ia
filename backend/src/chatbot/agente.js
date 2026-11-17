@@ -3,8 +3,8 @@ import { obtenerAgente } from '../models/sitio.model.js';
 import { listarCategorias } from '../models/producto.model.js';
 import { listarServicios } from '../models/servicio.model.js';
 import { listarEspecialidades } from '../models/especialidad.model.js';
-import { HERRAMIENTAS, definicionesAnthropic, catalogoTexto } from './herramientas/index.js';
-import { proveedor, llamarAnthropic, llamarOllama } from './proveedores.js';
+import { HERRAMIENTAS, catalogoTexto } from './herramientas/index.js';
+import { llamarOllama } from './ollama.js';
 
 const MAX_PASOS = 6;
 
@@ -76,27 +76,6 @@ function normalizarHistorial(historial, mensaje) {
   return mensajes;
 }
 
-async function conAnthropic(system, mensajes, contexto) {
-  const tools = definicionesAnthropic();
-  const acciones = [];
-  for (let paso = 0; paso < MAX_PASOS; paso++) {
-    const respuesta = await llamarAnthropic({ system, messages: mensajes, tools });
-    const usos = respuesta.content.filter((b) => b.type === 'tool_use');
-    if (respuesta.stop_reason !== 'tool_use' || !usos.length) {
-      const texto = respuesta.content.filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
-      return { respuesta: texto, acciones };
-    }
-    mensajes.push({ role: 'assistant', content: respuesta.content });
-    const resultados = [];
-    for (const uso of usos) {
-      const resultado = await ejecutar(uso.name, uso.input, contexto, acciones);
-      resultados.push({ type: 'tool_result', tool_use_id: uso.id, content: textoResultado(resultado), is_error: Boolean(resultado.error) });
-    }
-    mensajes.push({ role: 'user', content: resultados });
-  }
-  return { respuesta: 'Listo. ¿Te ayudo con algo más?', acciones };
-}
-
 const ESQUEMA_OLLAMA = {
   type: 'object',
   properties: {
@@ -143,6 +122,6 @@ export async function responderChat(mensaje, historial, sesion) {
   const system = await promptSistema();
   const mensajes = normalizarHistorial(historial, mensaje);
   const contexto = { sesion };
-  const resultado = proveedor() === 'anthropic' ? await conAnthropic(system, mensajes, contexto) : await conOllama(system, mensajes, contexto);
+  const resultado = await conOllama(system, mensajes, contexto);
   return { respuesta: resultado.respuesta || 'Listo. ¿Te ayudo con algo más?', acciones: resultado.acciones };
 }

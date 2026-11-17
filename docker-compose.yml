@@ -52,9 +52,6 @@ services:
       DB_NAME: santis_coffee
       OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
       OLLAMA_MODEL: gemma3:1b
-      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-haiku-5-5}
       CORS_ORIGIN: http://localhost:4200
     ports:
       - "3000:3000"

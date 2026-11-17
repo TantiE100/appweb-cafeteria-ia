@@ -15,13 +15,9 @@ frontend/   Angular 22 + Tailwind: inicio, servicios, especialidades, nosotros, 
 ## Requisitos
 
 - Docker
-- Ollama nativo (usa la GPU de la Mac) con el modelo `gemma3:1b`
+- Node.js 24 (solo para compilar el frontend)
 
-```
-brew install ollama
-brew services start ollama
-ollama pull gemma3:1b
-```
+Ollama corre en Docker (servicio `ollama`) y el servicio `ollama-modelo` descarga `gemma3:1b` al primer arranque. Los modelos quedan en `~/.ollama`.
 
 ## Levantar todo
 
@@ -34,6 +30,8 @@ docker compose up -d --build
 - API: http://localhost:3000/api
 
 MySQL se crea y se llena solo al primer arranque con `database/schema.sql` y `database/seed.sql`.
+
+Para usar Ollama nativo en vez del contenedor (aprovecha la GPU en Mac): `OLLAMA_URL=http://host.docker.internal:11434 docker compose up -d --build mysql backend frontend`.
 
 ## Desarrollo local
 
@@ -93,10 +91,7 @@ La persona, las reglas y el contexto del negocio salen de MySQL (tablas `agente`
 | reservas | `reservar_mesa`, `ver_reserva` |
 | contacto | `dejar_mensaje` |
 
-Proveedor (`LLM_PROVIDER`):
-
-- `ollama` (por defecto): gemma3 no soporta tool calling en Ollama, así que el modelo elige la herramienta respondiendo en JSON con `format` (JSON Schema) y el backend la ejecuta.
-- `anthropic`: function calling nativo (`tools` con `input_schema`, bucle `tool_use` / `tool_result`) con `claude-haiku-5-5`. Requiere `ANTHROPIC_API_KEY` en `.env`.
+El modelo es gemma3 en Ollama. Como gemma3 no soporta tool calling nativo en Ollama, el backend le envía el catálogo de herramientas por módulo y le exige responder con un JSON validado por JSON Schema (`format` de Ollama) que indica la herramienta y sus argumentos. El backend ejecuta la herramienta contra MySQL, le devuelve el resultado y repite hasta 3 pasos.
 
 Cada resultado vuelve al frontend como `acciones` y se muestra como tarjeta según su tipo: menú paginado, productos, especialidades, servicios, información, opciones de café, carrito, checkout, pedido o reserva.
 
